@@ -1,107 +1,143 @@
 package org.example;
 
-//        We assume that as follows:
-//
-//        (1) Node fanout = 50
-//
-//        (2) The current number of elements in the node X is 51, and therefore we must split the node X.
-//
-//        (3) The MBR of the node X is represented by two points (0, 0) and (100, 100)
-//
-//        (4) Generate 51 elements that contained in the node X using random number generator.
-//
-//
-//
-//        After completing your program upload the followings:
-//
-//        (1) source code
-//
-//        (2) the image that shows the result of execution of the program.
-
-// TODO: 18/12/2020 Quadratic-cost algorithm
-
-// TODO: 18/12/2020 Linear-cost algorithm
-
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
 
 public class App {
     public static void main(String[] args) {
 
-        Root root = new Root(50,1,100);
+        Root root = new Root(50, 1, 100);
 
-        for (int i = 0; i <= 50; i++ )
-        {
+        for (int i = 0; i <= 50; i++) {
             double[] coords = {getRandomDoubleBetweenRange(0, 100), getRandomDoubleBetweenRange(0, 100)};
             double[] dimentions = {getRandomDoubleBetweenRange(0, 100 - coords[0]), getRandomDoubleBetweenRange(0, 100 - coords[1])};
 
             Node nodeTemp;
-            nodeTemp  = new Node(coords,dimentions,true,root);
+            nodeTemp = new Node(coords, dimentions, true, root);
 
             root.insertNode(nodeTemp);
 
         }
-        root.PickSeeds();
-        System.out.println(Arrays.toString(root.PickSeeds().get(0).coords));
 
-        System.out.println(root.getAmountNodes());
+
+        //        Linear-cost algorithm
+//        root.groupSelection(root.PickSeedsLinear());
+
+        //        Quadratic-cost algorithm
+                root.groupSelection(root.PickSeedsQuadratic());
+
+        System.out.println(root.nodes.get(0).getChildren().size());
+        System.out.println(root.nodes.get(1).getChildren().size());
+
     }
 
     public static class Root {
-        private final int maxEntries;
-        private final int minEntries;
-        private final int numDims;
         private ArrayList<Node> nodes;
+
         public Root(int maxEntries, int minEntries, int numDims) {
             assert (minEntries <= (maxEntries / 2));
-            this.numDims = numDims;
-            this.maxEntries = maxEntries;
-            this.minEntries = minEntries;
             nodes = new ArrayList<Node>();
         }
 
-        public void insertNode (Node node)
-        {
+
+        public void insertNode(Node node) {
             nodes.add(node);
         }
 
-        public int getAmountNodes()
-        {
+        public int getAmountNodes() {
             return nodes.size();
         }
 
-        // TODO Pick first entry for each group
-        public ArrayList<Node> PickSeeds()
-        {
+        //        Quadratic-cost algorithm
+        public ArrayList<Node> PickSeedsQuadratic() {
             ArrayList<Node> seedNodes = new ArrayList<Node>();
             double maxArea = 0;
-            for (int i = 0; i <= 49; i++ )
-            {
-                for (int j = 0; j <= 49; j++ )
-                {
-                  double width = nodes.get(i).coords[0] - nodes.get(j).getCoords()[0];
-                  double height= nodes.get(i).getCoords()[1] - nodes.get(j).getCoords()[1];
-                  double rect = width * height;
+            for (int i = 0; i <= 50; i++) {
+                for (int j = 0; j <= 50; j++) {
+                    double width = nodes.get(i).coords[0] - nodes.get(j).getCoords()[0];
+                    double height = nodes.get(i).getCoords()[1] - nodes.get(j).getCoords()[1];
+                    double rect = width * height;
 
-                  Node node1 = nodes.get(i);
-                  Node node2 = nodes.get(j);
+                    Node node1 = nodes.get(i);
+                    Node node2 = nodes.get(j);
 
-                  if (rect > maxArea)
-                  {
-                      maxArea = rect;
-                      seedNodes.clear();
-                      seedNodes.add(node1);
-                      seedNodes.add(node2);
-                  }
+                    if (rect > maxArea) {
+                        maxArea = rect;
+                        seedNodes.clear();
+                        seedNodes.add(node1);
+                        seedNodes.add(node2);
+                    }
 
                 }
             }
             return seedNodes;
         }
-        // TODO Check if done
 
-        // TODO Select entry to assign
+        //        Linear-cost algorithm
+        public ArrayList<Node> PickSeedsLinear() {
+            ArrayList<Node> seedNodes = new ArrayList<Node>();
+
+            double maxLength = 0;
+
+            for (int i = 0; i <= 50; i++) {
+                for (int j = 0; j <= 50; j++) {
+
+                    double rightSideLeft;
+                    double leftSideRight;
+                    double bottomSideTop;
+                    double topSideBottom;
+
+                    rightSideLeft = nodes.get(i).coords[0] + nodes.get(i).dimensions[0];
+                    leftSideRight = nodes.get(j).coords[0] + nodes.get(j).dimensions[1];
+
+                    bottomSideTop = nodes.get(i).coords[1] + nodes.get(i).dimensions[1];
+                    topSideBottom = nodes.get(j).coords[1] + nodes.get(j).dimensions[0];
+
+                    double tempWidth = rightSideLeft - leftSideRight;
+                    double tempHeight = topSideBottom - bottomSideTop;
+
+                    Node node1 = nodes.get(i);
+                    Node node2 = nodes.get(j);
+
+                    if (tempHeight > maxLength && tempHeight > 0) {
+                        maxLength = tempHeight;
+                        seedNodes.clear();
+                        seedNodes.add(node1);
+                        seedNodes.add(node2);
+                    } else if (tempWidth > maxLength && tempWidth > 0) {
+                        maxLength = tempWidth;
+                        seedNodes.clear();
+                        seedNodes.add(node1);
+                        seedNodes.add(node2);
+                    }
+
+                }
+            }
+            return seedNodes;
+        }
+
+        public void groupSelection(ArrayList<Node> seedNodes) {
+            ArrayList<Node> temp = new ArrayList<Node>();
+            temp = nodes;
+            nodes = seedNodes;
+            nodes.get(0).leaf = false;
+            nodes.get(1).leaf = false;
+
+            for (Node node : temp) {
+                double width1 = node.coords[0] - nodes.get(0).getCoords()[0];
+                double height1 = node.coords[1] - nodes.get(0).getCoords()[1];
+                double rect1 = width1 * height1;
+
+                double width2 = node.coords[0] - nodes.get(1).getCoords()[0];
+                double height2 = node.coords[1] - nodes.get(1).getCoords()[1];
+                double rect2 = width2 * height2;
+
+                if (rect1 > rect2) {
+                    nodes.get(0).children.add(node);
+                } else {
+                    nodes.get(1).children.add(node);
+                }
+            }
+        }
 
 
     }
@@ -130,7 +166,7 @@ public class App {
         final double[] coords;
         final double[] dimensions;
         final ArrayList<Node> children;
-        final boolean leaf;
+        boolean leaf;
 
         Root parent;
 
@@ -146,12 +182,11 @@ public class App {
 
     }
 
-
     public static double getRandomDoubleBetweenRange(double min, double max) {
-        double x = (int) ((Math.random() * ((max - min) + 1)) + min);
-        return x;
+        return (int) ((Math.random() * ((max - min) + 1)) + min);
     }
 }
+
 
 
 
