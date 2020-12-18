@@ -23,6 +23,7 @@ package org.example;
 // TODO: 18/12/2020 Linear-cost algorithm
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 
 public class App {
@@ -30,9 +31,7 @@ public class App {
 
         Root root = new Root(50,1,100);
 
-
-
-        for (int i = 0; i <= 49; i++ )
+        for (int i = 0; i <= 50; i++ )
         {
             double[] coords = {getRandomDoubleBetweenRange(0, 100), getRandomDoubleBetweenRange(0, 100)};
             double[] dimentions = {getRandomDoubleBetweenRange(0, 100 - coords[0]), getRandomDoubleBetweenRange(0, 100 - coords[1])};
@@ -42,13 +41,11 @@ public class App {
 
             root.insertNode(nodeTemp);
 
-            System.out.println(root.nodes.get(i).getCoords()[0]);
-
         }
+        root.PickSeeds();
+        System.out.println(Arrays.toString(root.PickSeeds().get(0).coords));
 
-//        System.out.println(root.nodes.get(0)..getCoords()[0]);
-
-
+        System.out.println(root.getAmountNodes());
     }
 
     public static class Root {
@@ -56,7 +53,6 @@ public class App {
         private final int minEntries;
         private final int numDims;
         private ArrayList<Node> nodes;
-
         public Root(int maxEntries, int minEntries, int numDims) {
             assert (minEntries <= (maxEntries / 2));
             this.numDims = numDims;
@@ -69,6 +65,44 @@ public class App {
         {
             nodes.add(node);
         }
+
+        public int getAmountNodes()
+        {
+            return nodes.size();
+        }
+
+        // TODO Pick first entry for each group
+        public ArrayList<Node> PickSeeds()
+        {
+            ArrayList<Node> seedNodes = new ArrayList<Node>();
+            double maxArea = 0;
+            for (int i = 0; i <= 49; i++ )
+            {
+                for (int j = 0; j <= 49; j++ )
+                {
+                  double width = nodes.get(i).coords[0] - nodes.get(j).getCoords()[0];
+                  double height= nodes.get(i).getCoords()[1] - nodes.get(j).getCoords()[1];
+                  double rect = width * height;
+
+                  Node node1 = nodes.get(i);
+                  Node node2 = nodes.get(j);
+
+                  if (rect > maxArea)
+                  {
+                      maxArea = rect;
+                      seedNodes.clear();
+                      seedNodes.add(node1);
+                      seedNodes.add(node2);
+                  }
+
+                }
+            }
+            return seedNodes;
+        }
+        // TODO Check if done
+
+        // TODO Select entry to assign
+
 
     }
 
@@ -114,7 +148,7 @@ public class App {
 
 
     public static double getRandomDoubleBetweenRange(double min, double max) {
-        double x = ((Math.random() * ((max - min) + 1)) + min);
+        double x = (int) ((Math.random() * ((max - min) + 1)) + min);
         return x;
     }
 }
